@@ -1,0 +1,2 @@
+Some abstractions for the game of war include the cards themselves ie. their rank and suit, the entire deck of cards, 
+the rules for the game, and how the players are handeled.
