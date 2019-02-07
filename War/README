@@ -1,2 +1,9 @@
 Some abstractions for the game of war include the cards themselves ie. their rank and suit, the entire deck of cards, 
 the rules for the game, and how the players are handeled.
+
+For the game of war a deck of cards is shuffeled at the begining of the game and then it is slpit in half and given to two players.
+Each player then draws one card off the top of their deck and places it face up
+The player with the highest value card wins the round and keeps both cards
+If there is a draw then each player places three cards face down then the fourth card is palced face up to determine a winner
+If there is another draw then the process is repeated
+At the end of the game a winner is dertermined by who has gathered the most cards.
