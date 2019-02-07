@@ -1,6 +1,6 @@
 #include "card.hpp"
 
-string Card::suit(Suit s){
+string suit(Suit s){
 		switch(s) {
 			case Clubs: return "Clubs";
 			case Diamonds: return "Diamonds";
@@ -10,7 +10,7 @@ string Card::suit(Suit s){
 		}
 }
 
-string Card::rank(Rank r){
+string rank(Rank r){
 		switch(r){
 			case Ace: return "Ace";
 			case Two: return "Two";
