@@ -39,33 +39,46 @@ operator<<(std::ostream& os, Color c)
   return os << (c == Black ? "B" : "R");
 }
 
+
 std::ostream&
-operator<<(std::ostream& os, StandardCard c)
+operator<<(std::ostream& os, StandardCard const& c)
 {
-  return os << c.get_suit() << c.get_rank();
+  return os << c.rank << c.suit;
 }
 
 std::ostream&
-operator<<(std::ostream& os, JokerCard c)
+operator<<(std::ostream& os, JokerCard const& c)
 {
-  return os << c.get_color();
+  return os << c.color;
+}
+
+void
+StandardCard::print(std::ostream& os) const
+{
+  os << *this;
+}
+
+void 
+JokerCard::print(std::ostream& os) const
+{
+  os << *this;
 }
 
 std::ostream&
-operator<<(std::ostream& os, PlayingCard c)
+operator<<(std::ostream& os, Card const& c)
 {
-  if (c.is_standard())
-    return os << c.get_as_standard();
-  else
-    return os << c.get_as_joker();
+  c.print(os);
+  return os;
 }
 
 std::ostream& 
 operator<<(std::ostream& os, Deck const& d)
 {
   int n = 0;
-  for (PlayingCard c : d) {
-    os << c << ' ';
+
+ 
+  for (Card const* c : d) {
+    os << *c << ' ';
     if (n == 12) {
       os << '\n';
       n = 0;
@@ -74,5 +87,9 @@ operator<<(std::ostream& os, Deck const& d)
       ++n;
     }
   }
+
+  return os;
+}
+
   return os;
 }

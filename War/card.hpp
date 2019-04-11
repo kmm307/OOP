@@ -35,128 +35,53 @@ enum Color {
 };
 
 
-class StandardCard {
-public:
+
+
+struct Card {
+  
+  virtual Color get_color() const = 0;
+};
+
+
+struct StandardCard : Card {
   StandardCard(Rank r, Suit s)
     : rank(r), suit(s)
   { }
 
-  Rank get_rank() const { return rank; }
-  Suit get_suit() const { return suit; }
+  
+  void print(std::ostream& os) const override;
 
-private:
+  Color get_color() const override {
+    return static_cast<Color>(suit > Diamonds);
+  }
+
   Rank rank;
   Suit suit;
 };
 
-bool operator==(StandardCard a, StandardCard b);
-bool operator!=(StandardCard a, StandardCard b);
-
-bool operator<(StandardCard a, StandardCard b);
-bool operator>(StandardCard a, StandardCard b);
-bool operator<=(StandardCard a, StandardCard b);
-bool operator>=(StandardCard a, StandardCard b);
-
-
-class JokerCard
-{
-public:
+struct JokerCard : Card {
   JokerCard(Color c)
     : color(c)
   { }
+  
+  void print(std::ostream& os) const override;
 
-  Color get_color() const { return color; }
-
-private:
+  Color get_color() const override {
+    return color;
+  }
+  
   Color color;
 };
 
-union PlayingCardData
-{
-  PlayingCardData(Rank r, Suit s)
-    : sc(r, s)
-  { }
 
-  PlayingCardData(Color c)
-    : jc(c)
-  { }
-
-  StandardCard sc;
-  JokerCard jc;
-};
-
-enum PlayingCardKind
-{
-  Standard,
-  Joker,
-};
-
-
-class PlayingCard
-{
-public:
-  PlayingCard(Rank r, Suit s)
-    : tag(Standard), data(r, s)
-  { }
-
-  PlayingCard(Color c)
-    : tag(Joker), data(c)
-  { }
-
-  bool is_standard() const { 
-    return tag == Standard;
-  }
-
-  bool is_joker() const { 
-    return tag == Joker;
-  }
-
-  StandardCard get_as_standard() const {
-    assert(is_standard());
-    return data.sc;
-  }
-
-  Rank get_rank() const {
-    assert(is_standard());
-    return data.sc.get_rank();
-  }
-
-  Suit get_suit() const { 
-    assert(is_standard());
-    return data.sc.get_suit();
-  }
-
-  JokerCard get_as_joker() const {
-    assert(is_joker());
-    return data.jc;
-  }
-
-  Color get_color() const { 
-    assert(is_joker());
-    return data.jc.get_color();
-  }
-
-private:
-  PlayingCardKind tag;
-  PlayingCardData data;
-};
-
-struct PlayingCard 
-  : std::variant<StandardCard, JokerCard>
-{ };
-
-struct Deck : std::deque<PlayingCard> {
-  using std::deque<PlayingCard>::deque;
+struct Deck : std::deque<Card*> {
+  using std::deque<Card*>::deque;
 };
 
 std::ostream& operator<<(std::ostream& os, Suit s);
 std::ostream& operator<<(std::ostream& os, Rank r);
-std::ostream& operator<<(std::ostream& os, Color r);
-std::ostream& operator<<(std::ostream& os, StandardCard c);
-std::ostream& operator<<(std::ostream& os, JokerCard c);
-std::ostream& operator<<(std::ostream& os, PlayingCard c);
+std::ostream& operator<<(std::ostream& os, Color c);
+std::ostream& operator<<(std::ostream& os, StandardCard const& c);
+std::ostream& operator<<(std::ostream& os, JokerCard const& c);
+std::ostream& operator<<(std::ostream& os, Card const& c);
 std::ostream& operator<<(std::ostream& os, Deck const& d);
-
-
-
-#endif
