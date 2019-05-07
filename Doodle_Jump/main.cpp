@@ -2,19 +2,145 @@
 #include <time.h>
 using namespace sf;
 
-struct point
+
+struct event_listener
 {
-  int x, y;
+  virtual void on_close() { }
+  virtual void on_gain_focus() { }
+  virtual void on_lose_focus() { }
+  virtual void on_resize(sf::Event::SizeEvent) { }
+
+  virtual void on_mouse_button_press(sf::Event::MouseButtonEvent) { }
+  virtual void on_mouse_button_release(sf::Event::MouseButtonEvent) { }
+
+  virtual void on_key_press(sf::Event::KeyEvent) { }
+  virtual void on_key_release(sf::Event::KeyEvent) { }
 };
+
+
+{
+  event_source(sf::Window& w)
+    : window(&w)
+  { }
+
+  void
+  listen(event_listener& l)
+  {
+    listeners.push_back(&l);
+  }
+
+  void
+  poll()
+  {
+    sf::Event e;
+    while (window->pollEvent(e))
+      process(e);
+  }
+
+  void process(sf::Event const& e)
+  {
+    switch (e.type) {
+    case Event::Closed:
+      return notify([e](event_listener* l) { l->on_close(); });
+
+    case Event::Resized:
+      return notify([e](event_listener* l) { l->on_resize(e.size); });
+    
+    case Event::MouseButtonPressed:
+      return notify([e](event_listener* l) { l->on_mouse_button_press(e.mouseButton); });
+    case Event::MouseButtonReleased:
+      return notify([e](event_listener* l) { l->on_mouse_button_release(e.mouseButton); });
+
+    case Event::KeyPressed:
+      return notify([e](event_listener* l) { l->on_key_press(e.key); });
+    case Event::KeyReleased:
+      return notify([e](event_listener* l) { l->on_key_press(e.key); });
+    default:
+      break;
+    }
+  }
+
+  template<typename F>
+  void notify(F fn)
+  {
+    for (event_listener* l : listeners)
+      fn(l);    
+  }
+
+  sf::Window* window;
+
+  std::vector<event_listener*> listeners;
+};
+
+int ts = 54;
+
+struct doodle_jump_app : event_listener
+{
+  doodle_jump_app()
+    : prng(std::random_device()()),
+      window(VideoMode(740, 480), "Match-3 Game!"),
+      grid(prng)
+  {
+    window.setFramerateLimit(120);
+  }
+
+  // Returns true if the app is open.
+  bool is_open() const { return window.isOpen(); }
+
+  // Close the application.
+  void
+  on_close() override
+  {
+    window.close();
+  }
+
+  void 
+  on_mouse_button_press(sf::Event::MouseButtonEvent e) override
+  {
+    if (e.button == Mouse::Left) {
+      // Only register clicks if we're not currently animating.
+  bool moving = false; // True if moving.
+};
+
+struct debug_listener : event_listener
+{
+  debug_listener(doodle_jump_app& a)
+    : app(&a)
+  { }
+  
+  void on_close() override
+  {
+    std::cerr << "closing...\n";
+  }
+
+  void on_mouse_button_press(sf::Event::MouseButtonEvent e) override
+  {
+    std::cout << "mouse press: " << e.x << ' ' << e.y << '\n';
+    std::cout << "  - click: " << app->click << '\n';
+    std::cout << "  - moving: " << app->moving << '\n';
+    std::cout << "  - swapping: " << app->swapping << '\n';
+  }
+  void on_mouse_button_release(sf::Event::MouseButtonEvent e) override
+  {
+    std::cout << "mouse release: " << e.x << ' ' << e.y << '\n';
+    std::cout << "  - click: " << app->click << '\n';
+    std::cout << "  - moving: " << app->moving << '\n';
+    std::cout << "  - swapping: " << app->swapping << '\n';
+  }
+
+  bejeweled_app* app;
+};
+
 
 int
 main()
 {
-  srand(time(0));
 
+  //set up window
   RenderWindow app(VideoMode(400, 533), "Doodle Game!");
   app.setFramerateLimit(60);
 
+  //textures
   Texture t1, t2, t3;
   t1.loadFromFile("images/background.png");
   t2.loadFromFile("images/platform.png");
@@ -22,59 +148,33 @@ main()
 
   Sprite sBackground(t1), sPlat(t2), sPers(t3);
 
-  point plat[20];
+   // Create the app data and window.
+  doodle_jump_app app;
 
-  for (int i = 0; i < 10; i++) {
-    plat[i].x = rand() % 400;
-    plat[i].y = rand() % 533;
+  // Create a debugger
+  debug_listener debug(app);
+
+  // Construct the event loop and listeners.  
+  event_source events(app.window);
+  events.listen(app);
+  events.listen(debug);
+
+
+  while (app.is_open()) {
+   
+    // Update game state.
+    app.find_matches();
+    app.animate_moves();
+    app.animate_deletions();
+    app.update_score();
+    app.update_grid();
+
+    // Redraw the game.
+    app.draw();
   }
-
-  int x = 100, y = 100, h = 200;
-  float dx = 0, dy = 0;
-
-  while (app.isOpen()) {
-    Event e;
-    while (app.pollEvent(e)) {
-      if (e.type == Event::Closed)
-        app.close();
-    }
-
-    if (Keyboard::isKeyPressed(Keyboard::Right))
-      x += 3;
-    if (Keyboard::isKeyPressed(Keyboard::Left))
-      x -= 3;
-
-    dy += 0.2;
-    y += dy;
-    if (y > 500)
-      dy = -10;
-
-    if (y < h)
-      for (int i = 0; i < 10; i++) {
-        y = h;
-        plat[i].y = plat[i].y - dy;
-        if (plat[i].y > 533) {
-          plat[i].y = 0;
-          plat[i].x = rand() % 400;
-        }
-      }
-
-    for (int i = 0; i < 10; i++)
-      if ((x + 50 > plat[i].x) && (x + 20 < plat[i].x + 68) &&
-          (y + 70 > plat[i].y) && (y + 70 < plat[i].y + 14) && (dy > 0))
-        dy = -10;
-
-    sPers.setPosition(x, y);
-
-    app.draw(sBackground);
-    app.draw(sPers);
-    for (int i = 0; i < 10; i++) {
-      sPlat.setPosition(plat[i].x, plat[i].y);
-      app.draw(sPlat);
-    }
-
-    app.display();
-  }
-
+  
   return 0;
 }
+
+
+  
